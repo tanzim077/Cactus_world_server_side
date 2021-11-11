@@ -21,8 +21,7 @@ async function run() {
         const itemsTable = database.collection("Items");
         const ordersTable = database.collection("Orders");
         const reviewsTable = database.collection("Reviews");
-        // const userTable = database.collection("User");
-        const usersTable = database.collection('Users');
+        const usersTable = database.collection("Users");
 
 
         // --------------// GET  // ------------------------------
@@ -48,6 +47,18 @@ async function run() {
         //     res.send({ storyBlog });
         // })
 
+        // Check and get admin email
+        app.get('/users/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const user = await usersTable.findOne(query);
+            let isAdmin = false;
+            if (user?.role === 'admin') {
+                isAdmin = true;
+            }
+            res.json({ admin: isAdmin });
+        })
+
         // --------------// POST  // ------------------------------
         // Item post
         app.post('/items/create', async (req, res) => {
@@ -62,6 +73,13 @@ async function run() {
             const result = await ordersTable.insertOne(order);
             res.json(result)
         })
+
+        app.post('/users/create', async (req, res) => {
+            const user = req.body;
+            const result = await usersTable.insertOne(user);
+            console.log(result);
+            res.json(result);
+        });
 
         // --------------// UPDATE // ------------------------------
         // Item update
@@ -127,6 +145,26 @@ async function run() {
             const result = await ordersTable.updateOne(filter, updateDoc, options);
             res.send(result)
         })
+        //Update User by google sign in / sign up
+        app.put('/users/create', async (req, res) => {
+            const user = req.body;
+            console.log('put', user);
+            const filter = { email: user.email };
+            const options = { upsert: true };
+            const updateDoc = { $set: user };
+            const result = await usersTable.updateOne(filter, updateDoc, options);
+            res.json(result);
+        })
+
+
+        // make a user an  admin
+        app.put('/users/admin', async (req, res) => {
+            const user = req.body;
+            const filter = { email: user.email };
+            const updateDoc = { $set: { role: 'admin' } };
+            const result = await usersTable.updateOne(filter, updateDoc);
+            res.json(result);
+        })
 
 
         // --------------// DELETE // ------------------------------
@@ -146,8 +184,8 @@ async function run() {
         })
 
 
-// ````````````````````User part```````````````````````````````````````
-        
+        // ````````````````````User part```````````````````````````````````````
+
         app.get('/users/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email: email };
@@ -160,6 +198,7 @@ async function run() {
         })
 
         app.post('/users', async (req, res) => {
+            clg.log("user added hit");
             const user = req.body;
             const result = await usersTable.insertOne(user);
             console.log(result);
@@ -175,23 +214,13 @@ async function run() {
             res.json(result);
         });
 
-        app.put('/users/admin', verifyToken, async (req, res) => {
+        app.put('/users/admin', async (req, res) => {
             const user = req.body;
-            const requester = req.decodedEmail;
-            if (requester) {
-                const requesterAccount = await usersTable.findOne({ email: requester });
-                if (requesterAccount.role === 'admin') {
-                    const filter = { email: user.email };
-                    const updateDoc = { $set: { role: 'admin' } };
-                    const result = await usersTable.updateOne(filter, updateDoc);
-                    res.json(result);
-                }
-            }
-            else {
-
-                res.status(403).json({ message: 'you do not have access to make admin' })
-            }
-
+            console.log('put', user);
+            const filter = { email: user.email };
+            const updateDoc = { $set: { role: 'admin' } };
+            const result = await usersTable.updateOne(filter, updateDoc);
+            res.json(result);
         })
 
 
