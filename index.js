@@ -41,11 +41,11 @@ async function run() {
         })
 
         // Get all reviews 
-        // app.get('/reviews', async (req, res) => {
-        //     const cursor = reviewsTable.find({});
-        //     const storyBlog = await cursor.toArray();
-        //     res.send({ storyBlog });
-        // })
+        app.get('/reviews', async (req, res) => {
+            const cursor = reviewsTable.find({});
+            const reviews = await cursor.toArray();
+            res.send({ reviews });
+        })
 
         // Check and get admin email
         app.get('/users/:email', async (req, res) => {
@@ -74,10 +74,17 @@ async function run() {
             res.json(result)
         })
 
+        // Order post
+        app.post('/reviews/create', async (req, res) => {
+            const reviews = req.body;
+            const result = await reviewsTable.insertOne(reviews);
+            res.json(result)
+        })
+
+        // Create User
         app.post('/users/create', async (req, res) => {
             const user = req.body;
             const result = await usersTable.insertOne(user);
-            console.log(result);
             res.json(result);
         });
 
@@ -148,7 +155,6 @@ async function run() {
         //Update User by google sign in / sign up
         app.put('/users/create', async (req, res) => {
             const user = req.body;
-            console.log('put', user);
             const filter = { email: user.email };
             const options = { upsert: true };
             const updateDoc = { $set: user };
@@ -186,6 +192,7 @@ async function run() {
 
         // ````````````````````User part```````````````````````````````````````
 
+        // Get user email and check is admin
         app.get('/users/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email: email };
@@ -197,14 +204,14 @@ async function run() {
             res.json({ admin: isAdmin });
         })
 
+        // Add a user
         app.post('/users', async (req, res) => {
-            clg.log("user added hit");
             const user = req.body;
             const result = await usersTable.insertOne(user);
-            console.log(result);
-            res.json(result);
+                       res.json(result);
         });
 
+        // Add a user by google login
         app.put('/users', async (req, res) => {
             const user = req.body;
             const filter = { email: user.email };
@@ -214,16 +221,14 @@ async function run() {
             res.json(result);
         });
 
+        // Assign admin role to a user
         app.put('/users/admin', async (req, res) => {
             const user = req.body;
-            console.log('put', user);
-            const filter = { email: user.email };
+           const filter = { email: user.email };
             const updateDoc = { $set: { role: 'admin' } };
             const result = await usersTable.updateOne(filter, updateDoc);
             res.json(result);
         })
-
-
 
     }
     finally {
@@ -232,8 +237,6 @@ async function run() {
 }
 
 run().catch(console.dir);
-
-
 
 app.get('/', (req, res) => {
     res.send('Hello Explore The Nature Server!!!')
