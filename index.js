@@ -74,7 +74,7 @@ async function run() {
             res.json(result)
         })
 
-        // Order post
+        // Reviews post
         app.post('/reviews/create', async (req, res) => {
             const reviews = req.body;
             const result = await reviewsTable.insertOne(reviews);
