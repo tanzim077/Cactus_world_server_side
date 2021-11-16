@@ -6,6 +6,10 @@ const cors = require('cors')
 const { MongoClient } = require('mongodb');
 const ObjectId = require('mongodb').ObjectId;
 
+// This is a sample test API key.
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
+
 // MiddleWare
 app.use(cors());
 app.use(express.json());
@@ -208,7 +212,7 @@ async function run() {
         app.post('/users', async (req, res) => {
             const user = req.body;
             const result = await usersTable.insertOne(user);
-                       res.json(result);
+            res.json(result);
         });
 
         // Add a user by google login
@@ -224,13 +228,30 @@ async function run() {
         // Assign admin role to a user
         app.put('/users/admin', async (req, res) => {
             const user = req.body;
-           const filter = { email: user.email };
+            const filter = { email: user.email };
             const updateDoc = { $set: { role: 'admin' } };
             const result = await usersTable.updateOne(filter, updateDoc);
             res.json(result);
         })
 
+        // Stripe Payment
+        app.post('/create-payment-intent', async (req, res) => {
+            const paymentInfo = req.body;
+            const amount = paymentInfo.totalAmount * 100;
+
+            // Create a PaymentIntent with the order amount and currency
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: 'usd',
+                amount: amount,
+                payment_method_types: ['card']
+            });
+
+            res.send({ clientSecret: paymentIntent.client_secret });
+        });
+
+
     }
+
     finally {
         // await client.close();
     }
@@ -238,8 +259,9 @@ async function run() {
 
 run().catch(console.dir);
 
+
 app.get('/', (req, res) => {
-    res.send('Hello Explore The Nature Server!!!')
+    res.send('Hello Explore The Server!!!')
 })
 
 app.listen(port, () => {
