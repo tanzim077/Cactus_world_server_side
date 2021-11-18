@@ -166,7 +166,6 @@ async function run() {
             res.json(result);
         })
 
-
         // make a user an  admin
         app.put('/users/admin', async (req, res) => {
             const user = req.body;
@@ -241,7 +240,7 @@ async function run() {
 
             // Create a PaymentIntent with the order amount and currency
             const paymentIntent = await stripe.paymentIntents.create({
-                currency: 'usd',
+                currency: 'bdt',
                 amount: amount,
                 payment_method_types: ['card']
             });
@@ -250,6 +249,20 @@ async function run() {
         });
 
 
+        //UpdatePayment Status
+        app.put('/orders/successpayment/:id', async (req, res) => {
+            const id = req.params.id;
+            // const updateSchedule = req.body;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    payment: "ok"
+                }
+            };
+            const result = await ordersTable.updateOne(filter, updateDoc, options);
+            res.send(result)
+        })
     }
 
     finally {
