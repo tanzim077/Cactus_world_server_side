@@ -150,7 +150,7 @@ async function run() {
             const options = { upsert: true };
             const updateDoc = {
                 $set: {
-                    userStatus: (updateSchedule.userStatus === "pending") ? "ok" : "pending"
+                    deliveryStatus: (updateSchedule.deliveryStatus === "pending") ? "shipped" : "pending"
                 }
             };
             const result = await ordersTable.updateOne(filter, updateDoc, options);
@@ -252,12 +252,13 @@ async function run() {
         //UpdatePayment Status
         app.put('/orders/successpayment/:id', async (req, res) => {
             const id = req.params.id;
-            // const updateSchedule = req.body;
+            const paymentTime = req.body.paymentTime;
             const filter = { _id: ObjectId(id) };
             const options = { upsert: true };
             const updateDoc = {
                 $set: {
-                    payment: "ok"
+                    paymentStatus: "paid",
+                    paymentTime: paymentTime
                 }
             };
             const result = await ordersTable.updateOne(filter, updateDoc, options);
